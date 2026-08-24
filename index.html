@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>好友分享</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #F8F9FA;
+      color: #666;
+    }
+    .status { text-align: center; padding: 20px; }
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.1);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border-left-color: #6B2D3C;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="status">
+    <div class="spinner"></div>
+    <p>正在開啟 LINE 好友分享清單...</p>
+  </div>
+
+  <script>
+    // 🌟 您的專屬 LIFF ID
+    const LIFF_ID = "2011205069-EI78ngfh";
+
+    async function main() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        if (!liff.isApiAvailable("shareTargetPicker")) {
+          alert("⚠️ 請至 LINE Developers 後台將 Share Target Picker 切換為 ON！");
+          liff.closeWindow();
+          return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get("title") || "好友同享優惠券";
+        const img = urlParams.get("img") || "";
+        const desc = urlParams.get("desc") || "送您一張專屬優惠券，點擊立即領取！🎁";
+        const botId = urlParams.get("bot") || "";
+        const vip = urlParams.get("vip") || "";
+        const themeColor = urlParams.get("color") || "#6B2D3C";
+
+        const triggerText = `🎁領取好友專屬見面禮【VIP推薦碼：${vip}】`;
+        const botOaUrl = `https://line.me/R/oaMessage/${botId}/?${encodeURIComponent(triggerText)}`;
+
+        let flexContents = {
+          type: "bubble",
+          size: "kilo",
+          body: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+              { type: "text", text: "🎁 送您一張專屬優惠券！", weight: "bold", size: "md", color: themeColor },
+              { type: "text", text: `【${title}】`, weight: "bold", size: "lg", margin: "md", wrap: true },
+              { type: "text", text: desc, size: "xs", color: "#666666", margin: "md", wrap: true }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                color: themeColor,
+                height: "sm",
+                action: {
+                  type: "uri",
+                  label: "👉 立即領取優惠券",
+                  uri: botOaUrl
+                }
+              }
+            ]
+          }
+        };
+
+        if (img && img.startsWith("http")) {
+          flexContents.hero = {
+            type: "image",
+            url: img,
+            size: "full",
+            aspectRatio: "20:13",
+            aspectMode: "cover"
+          };
+        }
+
+        await liff.shareTargetPicker([
+          {
+            type: "flex",
+            altText: `🎁 您的好友送了您一張【${title}】！`,
+            contents: flexContents
+          }
+        ]);
+
+        liff.closeWindow();
+      } catch (err) {
+        liff.closeWindow();
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
