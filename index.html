@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>好友分享</title>
+  <!-- 引入 LINE 官方 LIFF SDK -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body {
@@ -36,11 +37,16 @@
   </div>
 
   <script>
-    // 🌟 您的專屬 LIFF ID
-    const LIFF_ID = "2011223843-sCBQiBKK";
+    // 預設備用 LIFF ID（若網址未特別傳入 liffId 時自動套用）
+    const DEFAULT_LIFF_ID = "2011205069-EI78ngfh";
 
     async function main() {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // 🌟 自動動態辨識：優先讀取網址傳入的 liffId，無指定則套用預設值
+        const LIFF_ID = urlParams.get("liffId") || DEFAULT_LIFF_ID;
+
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
           liff.login();
@@ -53,7 +59,7 @@
           return;
         }
 
-        const urlParams = new URLSearchParams(window.location.search);
+        // 動態讀取各客戶試算表傳入的活動參數
         const title = urlParams.get("title") || "好友同享優惠券";
         const img = urlParams.get("img") || "";
         const desc = urlParams.get("desc") || "送您一張專屬優惠券，點擊立即領取！🎁";
@@ -61,9 +67,11 @@
         const vip = urlParams.get("vip") || "";
         const themeColor = urlParams.get("color") || "#6B2D3C";
 
+        // 自動組合官方帳號直達連結與通關密語
         const triggerText = `🎁領取好友專屬見面禮【VIP推薦碼：${vip}】`;
         const botOaUrl = `https://line.me/R/oaMessage/${botId}/?${encodeURIComponent(triggerText)}`;
 
+        // 組裝純淨 Flex 圖文卡片
         let flexContents = {
           type: "bubble",
           size: "kilo",
@@ -105,6 +113,7 @@
           };
         }
 
+        // 喚起原生分享視窗
         await liff.shareTargetPicker([
           {
             type: "flex",
