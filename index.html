@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>好友分享</title>
-  <!-- 引入 LINE 官方 LIFF SDK -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body {
@@ -15,51 +14,68 @@
       height: 100vh;
       margin: 0;
       background-color: #F8F9FA;
-      color: #666;
+      color: #555;
     }
-    .status { text-align: center; padding: 20px; }
+    .status { text-align: center; padding: 24px; max-width: 320px; width: 100%; }
     .spinner {
       border: 3px solid rgba(0,0,0,0.1);
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border-left-color: #6B2D3C;
       animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
+      margin: 0 auto 16px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .error-box { display: none; color: #D9383A; font-size: 13px; line-height: 1.6; text-align: left; background: #FFF0F0; padding: 14px; border-radius: 8px; border: 1px solid #FFD0D0; margin-top: 12px; }
   </style>
 </head>
 <body>
   <div class="status">
-    <div class="spinner"></div>
-    <p>正在開啟 LINE 好友分享清單...</p>
+    <div id="loadingSpinner" class="spinner"></div>
+    <div id="statusText">正在開啟 LINE 好友分享清單...</div>
+    <div id="errorBox" class="error-box"></div>
   </div>
 
   <script>
-    // 預設備用 LIFF ID（若網址未特別傳入 liffId 時自動套用）
+    // 🌟 您有效的新 LIFF ID
     const DEFAULT_LIFF_ID = "2011223843-sCBQiBKK";
+
+    function showError(msg) {
+      document.getElementById("loadingSpinner").style.display = "none";
+      document.getElementById("statusText").style.display = "none";
+      const errEl = document.getElementById("errorBox");
+      errEl.innerHTML = `⚠️ <strong>轉發失敗提示：</strong><br>${msg}`;
+      errEl.style.display = "block";
+    }
 
     async function main() {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
+        // 🌟 1. 自動拆解 LINE liff.state 打包參數
+        let rawSearch = window.location.search;
+        let urlParams = new URLSearchParams(rawSearch);
+        if (urlParams.has("liff.state")) {
+          const state = urlParams.get("liff.state");
+          rawSearch = state.startsWith("?") ? state : "?" + state;
+          urlParams = new URLSearchParams(rawSearch);
+        }
 
-        // 🌟 自動動態辨識：優先讀取網址傳入的 liffId，無指定則套用預設值
         const LIFF_ID = urlParams.get("liffId") || DEFAULT_LIFF_ID;
 
+        // 🌟 2. 初始化 LIFF
         await liff.init({ liffId: LIFF_ID });
+
         if (!liff.isLoggedIn()) {
           liff.login();
           return;
         }
 
         if (!liff.isApiAvailable("shareTargetPicker")) {
-          alert("⚠️ 請至 LINE Developers 後台將 Share Target Picker 切換為 ON！");
-          liff.closeWindow();
+          showError("請至 LINE Developers 後台 ➔ 該 LIFF 設定 ➔ 將 <strong>Share Target Picker</strong> 切換為 <strong>ON</strong>！");
           return;
         }
 
-        // 動態讀取各客戶試算表傳入的活動參數
+        // 🌟 3. 動態讀取活動參數
         const title = urlParams.get("title") || "好友同享優惠券";
         const img = urlParams.get("img") || "";
         const desc = urlParams.get("desc") || "送您一張專屬優惠券，點擊立即領取！🎁";
@@ -67,11 +83,12 @@
         const vip = urlParams.get("vip") || "";
         const themeColor = urlParams.get("color") || "#6B2D3C";
 
-        // 自動組合官方帳號直達連結與通關密語
+        // 🌟 4. 組裝安全的直達連結
         const triggerText = `🎁領取好友專屬見面禮【VIP推薦碼：${vip}】`;
-        const botOaUrl = `https://line.me/R/oaMessage/${botId}/?${encodeURIComponent(triggerText)}`;
+        const botOaUrl = botId 
+          ? `https://line.me/R/oaMessage/${botId}/?${encodeURIComponent(triggerText)}`
+          : "https://line.me/";
 
-        // 組裝純淨 Flex 圖文卡片
         let flexContents = {
           type: "bubble",
           size: "kilo",
@@ -113,8 +130,8 @@
           };
         }
 
-        // 喚起原生分享視窗
-        await liff.shareTargetPicker([
+        // 🌟 5. 喚起 LINE 原生圖卡分享視窗
+        const res = await liff.shareTargetPicker([
           {
             type: "flex",
             altText: `🎁 您的好友送了您一張【${title}】！`,
@@ -122,9 +139,11 @@
           }
         ]);
 
-        liff.closeWindow();
+        if (res) {
+          liff.closeWindow();
+        }
       } catch (err) {
-        liff.closeWindow();
+        showError(err.message || String(err));
       }
     }
 
