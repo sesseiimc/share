@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>我的專屬票券夾</title>
+  <style>
+    :root {
+      --theme-color: #6B2D3C;
+      --bg-color: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --text-main: #2D3748;
+      --text-sub: #718096;
+      --danger: #E53E3E;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px 16px 40px;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--theme-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    .tabs {
+      display: flex;
+      background: #E2E8F0;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #FFFFFF;
+      color: var(--theme-color);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .coupon-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .coupon-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #EDF2F7;
+      position: relative;
+    }
+
+    .coupon-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background-color: #E2E8F0;
+    }
+
+    .coupon-body {
+      padding: 16px;
+    }
+
+    .coupon-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .coupon-expiry {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--danger);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .code-box {
+      background: #F7FAFC;
+      border: 1px dashed #CBD5E0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .code-label {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .code-value {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--text-main);
+    }
+
+    .terms-box {
+      background: #FAF5F5;
+      border-left: 3px solid var(--theme-color);
+      padding: 10px 12px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 16px;
+    }
+
+    .terms-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--theme-color);
+      margin-bottom: 4px;
+    }
+
+    .terms-content {
+      font-size: 12px;
+      color: var(--text-sub);
+      white-space: pre-line;
+      line-height: 1.5;
+    }
+
+    .btn-redeem {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background-color: var(--theme-color);
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-redeem:active {
+      opacity: 0.85;
+    }
+
+    .btn-redeem.used {
+      background-color: #CBD5E0;
+      color: #718096;
+      cursor: not-allowed;
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(0,0,0,0.6);
+      color: #FFFFFF;
+      backdrop-filter: blur(4px);
+    }
+
+    .status-badge.unused {
+      background: var(--theme-color);
+    }
+
+    .status-badge.used {
+      background: #718096;
+    }
+
+    .loading-state, .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-sub);
+    }
+
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: var(--theme-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .modal h3 {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-cancel { background: #EDF2F7; color: var(--text-main); }
+    .btn-confirm { background: var(--theme-color); color: #FFFFFF; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🎟️ 我的專屬票券夾</h1>
+    <p>結帳時請主動出示此畫面由門市人員核銷</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('unused')">可使用</button>
+    <button class="tab-btn" onclick="switchTab('used')">已使用 / 歷史紀錄</button>
+  </div>
+
+  <div id="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>正在載入您的專屬優惠券...</p>
+  </div>
+
+  <div id="couponList" class="coupon-list" style="display: none;"></div>
+  <div id="emptyList" class="empty-state" style="display: none;">
+    <p>目前沒有任何優惠券喔！🎁</p>
+  </div>
+
+  <!-- 核銷確認彈跳視窗 -->
+  <div id="redeemModal" class="modal-overlay">
+    <div class="modal">
+      <h3>確認進行門市核銷？</h3>
+      <p id="modalCouponTitle" style="font-weight: 700; color: var(--theme-color); margin: 6px 0;"></p>
+      <p>⚠️ 核銷後優惠券狀態將變更為「已使用」，不可恢復。</p>
+      <div class="modal-actions">
+        <button class="modal-btn btn-cancel" onclick="closeModal()">取消</button>
+        <button id="modalConfirmBtn" class="modal-btn btn-confirm">確認核銷</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const USER_ID = urlParams.get("uid") || "";
+    const API_URL = urlParams.get("api") || "";
+    const THEME_COLOR = urlParams.get("color") || "#6B2D3C";
+
+    document.documentElement.style.setProperty("--theme-color", THEME_COLOR);
+
+    let allCoupons = [];
+    let currentTab = "unused";
+    let pendingRedeemRow = null;
+
+    async function fetchCoupons() {
+      if (!USER_ID || !API_URL) {
+        document.getElementById("loading").innerHTML = "⚠️ 無效的訪問連結，請從官方 LINE 選單重新開啟。";
+        return;
+      }
+
+      try {
+        const fetchUrl = `${API_URL}?action=getCoupons&uid=${encodeURIComponent(USER_ID)}`;
+        const res = await fetch(fetchUrl);
+        const data = await res.json();
+
+        allCoupons = data || [];
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("couponList").style.display = "flex";
+        renderCoupons();
+      } catch (err) {
+        document.getElementById("loading").innerHTML = "⚠️ 載入票券失敗，請稍後重新整理。";
+      }
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab-btn").forEach((btn, idx) => {
+        btn.classList.toggle("active", (idx === 0 && tab === "unused") || (idx === 1 && tab === "used"));
+      });
+      renderCoupons();
+    }
+
+    function renderCoupons() {
+      const container = document.getElementById("couponList");
+      const emptyEl = document.getElementById("emptyList");
+      container.innerHTML = "";
+
+      const filtered = allCoupons.filter(c => {
+        return currentTab === "unused" ? c.status === "未使用" : c.status === "已使用";
+      });
+
+      if (filtered.length === 0) {
+        emptyEl.style.display = "block";
+        return;
+      }
+      emptyEl.style.display = "none";
+
+      filtered.forEach(c => {
+        const isUnused = c.status === "未使用";
+        const card = document.createElement("div");
+        card.className = "coupon-card";
+
+        const imgHtml = c.img ? `<img class="coupon-img" src="${c.img}" alt="券圖">` : "";
+
+        card.innerHTML = `
+          ${imgHtml}
+          <div class="status-badge ${isUnused ? 'unused' : 'used'}">${c.status}</div>
+          <div class="coupon-body">
+            <div class="coupon-title">${c.title}</div>
+            <div class="coupon-expiry">⌛ 有效期限：${c.expiry}</div>
+            <div class="code-box">
+              <span class="code-label">折扣代碼</span>
+              <span class="code-value">${c.code}</span>
+            </div>
+            <div class="terms-box">
+              <div class="terms-title">📌 使用條件：</div>
+              <div class="terms-content">${c.terms}</div>
+            </div>
+            <button class="btn-redeem ${isUnused ? '' : 'used'}" ${isUnused ? `onclick="openModal(${c.row}, '${c.title}')"` : 'disabled'}>
+              ${isUnused ? '門市人員點擊核銷' : '已核銷完成'}
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openModal(row, title) {
+      pendingRedeemRow = row;
+      document.getElementById("modalCouponTitle").innerText = `【${title}】`;
+      document.getElementById("redeemModal").style.display = "flex";
+      document.getElementById("modalConfirmBtn").onclick = executeRedeem;
+    }
+
+    function closeModal() {
+      pendingRedeemRow = null;
+      document.getElementById("redeemModal").style.display = "none";
+    }
+
+    async function executeRedeem() {
+      if (!pendingRedeemRow) return;
+      const confirmBtn = document.getElementById("modalConfirmBtn");
+      confirmBtn.innerText = "核銷中...";
+      confirmBtn.disabled = true;
+
+      try {
+        const redeemUrl = `${API_URL}?action=redeem&row=${pendingRedeemRow}`;
+        const res = await fetch(redeemUrl);
+        const result = await res.json();
+
+        if (result && result.success) {
+          closeModal();
+          const target = allCoupons.find(c => c.row === pendingRedeemRow);
+          if (target) target.status = "已使用";
+          renderCoupons();
+        } else {
+          alert("核銷失敗，請重試。");
+        }
+      } catch (e) {
+        alert("核銷失敗，請檢查網路連線。");
+      } finally {
+        confirmBtn.innerText = "確認核銷";
+        confirmBtn.disabled = false;
+      }
+    }
+
+    fetchCoupons();
+  </script>
+</body>
+</html>
