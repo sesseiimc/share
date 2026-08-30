@@ -2,148 +2,211 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>好友分享</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>專屬好禮轉發</title>
+  <!-- LINE LIFF SDK -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
+    :root {
+      --theme-color: #6B2D3C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #F8F9FA;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #F8F9FA;
-      color: #555;
+      min-height: 100vh;
+      padding: 20px 16px;
     }
-    .status { text-align: center; padding: 24px; max-width: 320px; width: 100%; }
+    .card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      max-width: 360px;
+      width: 100%;
+      overflow: hidden;
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      background: #EDF2F7;
+    }
+    .card-body {
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2D3748;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #718096;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+    .btn-share {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: var(--theme-color);
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+    }
     .spinner {
       border: 3px solid rgba(0,0,0,0.1);
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      border-left-color: #6B2D3C;
+      border-left-color: var(--theme-color);
       animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
+      margin: 20px auto;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .error-box { display: none; color: #D9383A; font-size: 13px; line-height: 1.6; text-align: left; background: #FFF0F0; padding: 14px; border-radius: 8px; border: 1px solid #FFD0D0; margin-top: 12px; }
   </style>
 </head>
 <body>
-  <div class="status">
-    <div id="loadingSpinner" class="spinner"></div>
-    <div id="statusText">正在開啟 LINE 好友分享清單...</div>
-    <div id="errorBox" class="error-box"></div>
+
+  <div class="card" id="mainCard">
+    <div id="loadingBox" style="padding: 40px 20px;">
+      <div class="spinner"></div>
+      <p id="statusMsg" style="font-size: 14px; color: #718096;">正在為您跳轉官方 LINE...</p>
+    </div>
+
+    <!-- 好友分享卡專用顯示區域（若不是分享模式則隱藏） -->
+    <div id="shareBox" style="display: none;">
+      <img id="cardImg" src="" alt="優惠卡圖">
+      <div class="card-body">
+        <h2 class="card-title" id="cardTitle">專屬好禮分享</h2>
+        <p class="card-desc" id="cardDesc"></p>
+        <button class="btn-share" id="shareBtn" onclick="shareToFriends()">📲 點擊選擇 LINE 好友轉發</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    // 🌟 您有效的新 LIFF ID
-    const DEFAULT_LIFF_ID = "2011223843-sCBQiBKK";
+    const LIFF_ID = "2011223843-sCBQiBKK";
+    const urlParams = new URLSearchParams(window.location.search);
 
-    function showError(msg) {
-      document.getElementById("loadingSpinner").style.display = "none";
-      document.getElementById("statusText").style.display = "none";
-      const errEl = document.getElementById("errorBox");
-      errEl.innerHTML = `⚠️ <strong>轉發失敗提示：</strong><br>${msg}`;
-      errEl.style.display = "block";
-    }
+    // 參數解析
+    const SOURCE_TAG = urlParams.get("src") || "";      // 渠道識別碼 (例如: FB01, STORE01)
+    const API_URL    = urlParams.get("api") || "";      // GAS Webhook 網址
+    const BOT_ID     = urlParams.get("bot") || "";      // 官方帳號 Basic ID (例如: @123abcde)
+    const TITLE      = urlParams.get("title") || "好友同享專屬優惠";
+    const IMG_URL    = urlParams.get("img") || "";
+    const DESC       = urlParams.get("desc") || "送你一份專屬好禮！點擊領取好友推薦禮！";
+    const VIP_CODE   = urlParams.get("vip") || "";
+    const THEME_COL  = urlParams.get("color") || "#6B2D3C";
+
+    document.documentElement.style.setProperty("--theme-color", THEME_COL);
 
     async function main() {
       try {
-        // 🌟 1. 自動拆解 LINE liff.state 打包參數
-        let rawSearch = window.location.search;
-        let urlParams = new URLSearchParams(rawSearch);
-        if (urlParams.has("liff.state")) {
-          const state = urlParams.get("liff.state");
-          rawSearch = state.startsWith("?") ? state : "?" + state;
-          urlParams = new URLSearchParams(rawSearch);
-        }
-
-        const LIFF_ID = urlParams.get("liffId") || DEFAULT_LIFF_ID;
-
-        // 🌟 2. 初始化 LIFF
         await liff.init({ liffId: LIFF_ID });
 
         if (!liff.isLoggedIn()) {
-          liff.login();
+          liff.login({ redirectUri: window.location.href });
           return;
         }
 
-        if (!liff.isApiAvailable("shareTargetPicker")) {
-          showError("請至 LINE Developers 後台 ➔ 該 LIFF 設定 ➔ 將 <strong>Share Target Picker</strong> 切換為 <strong>ON</strong>！");
+        const profile = await liff.getProfile();
+        const userId = profile.userId;
+
+        // 🌟 模式 A：如果是「渠道分流導購 (帶有 src 參數)」
+        if (SOURCE_TAG) {
+          document.getElementById("statusMsg").innerText = "🎁 正在為您準備專屬迎賓禮...";
+
+          if (API_URL) {
+            try {
+              // 背景通知 GAS：該用戶由 SOURCE_TAG 進站，立即發送對應專屬卡片
+              const trackUrl = `${API_URL}?action=trackSource&uid=${encodeURIComponent(userId)}&src=${encodeURIComponent(SOURCE_TAG)}`;
+              await fetch(trackUrl, { mode: 'no-cors' });
+            } catch (e) {
+              console.log("Track Error", e);
+            }
+          }
+
+          // 0.3 秒後自動導向官方帳號聊天室，卡片已在裡面發送好
+          setTimeout(() => {
+            if (BOT_ID) {
+              window.location.href = `https://line.me/R/ti/p/${encodeURIComponent(BOT_ID)}`;
+            } else if (liff.isInClient()) {
+              liff.closeWindow();
+            }
+          }, 300);
           return;
         }
 
-        // 🌟 3. 動態讀取活動參數
-        const title = urlParams.get("title") || "好友同享優惠券";
-        const img = urlParams.get("img") || "";
-        const desc = urlParams.get("desc") || "送您一張專屬優惠券，點擊立即領取！🎁";
-        const botId = urlParams.get("bot") || "";
-        const vip = urlParams.get("vip") || "";
-        const themeColor = urlParams.get("color") || "#6B2D3C";
-
-        // 🌟 4. 組裝安全的直達連結
-        const triggerText = `🎁領取好友專屬見面禮【VIP推薦碼：${vip}】`;
-        const botOaUrl = botId 
-          ? `https://line.me/R/oaMessage/${botId}/?${encodeURIComponent(triggerText)}`
-          : "https://line.me/";
-
-        let flexContents = {
-          type: "bubble",
-          size: "kilo",
-          body: {
-            type: "box",
-            layout: "vertical",
-            contents: [
-              { type: "text", text: "🎁 送您一張專屬優惠券！", weight: "bold", size: "md", color: themeColor },
-              { type: "text", text: `【${title}】`, weight: "bold", size: "lg", margin: "md", wrap: true },
-              { type: "text", text: desc, size: "xs", color: "#666666", margin: "md", wrap: true }
-            ]
-          },
-          footer: {
-            type: "box",
-            layout: "vertical",
-            contents: [
-              {
-                type: "button",
-                style: "primary",
-                color: themeColor,
-                height: "sm",
-                action: {
-                  type: "uri",
-                  label: "👉 立即領取優惠券",
-                  uri: botOaUrl
-                }
-              }
-            ]
-          }
-        };
-
-        if (img && img.startsWith("http")) {
-          flexContents.hero = {
-            type: "image",
-            url: img,
-            size: "full",
-            aspectRatio: "20:13",
-            aspectMode: "cover"
-          };
+        // 🌟 模式 B：好友分享卡模式（原本的轉發流程）
+        document.getElementById("loadingBox").style.display = "none";
+        document.getElementById("shareBox").style.display = "block";
+        document.getElementById("cardTitle").innerText = TITLE;
+        document.getElementById("cardDesc").innerText = DESC;
+        if (IMG_URL) {
+          document.getElementById("cardImg").src = IMG_URL;
+        } else {
+          document.getElementById("cardImg").style.display = "none";
         }
 
-        // 🌟 5. 喚起 LINE 原生圖卡分享視窗
-        const res = await liff.shareTargetPicker([
-          {
-            type: "flex",
-            altText: `🎁 您的好友送了您一張【${title}】！`,
-            contents: flexContents
-          }
-        ]);
-
-        if (res) {
-          liff.closeWindow();
-        }
       } catch (err) {
-        showError(err.message || String(err));
+        document.getElementById("statusMsg").innerText = "⚠️ 載入失敗，請重新開啟。";
+      }
+    }
+
+    async function shareToFriends() {
+      if (!liff.isApiAvailable("shareTargetPicker")) {
+        alert("此環境不支援一鍵轉發，請在 LINE 手機 App 內開啟。");
+        return;
+      }
+
+      const claimKeyword = `CLAIM_${VIP_CODE}`;
+      const claimUrl = BOT_ID 
+        ? `https://line.me/R/oaMessage/${encodeURIComponent(BOT_ID)}/?${encodeURIComponent(claimKeyword)}`
+        : `https://line.me/R/nv/chat`;
+
+      const shareBubble = {
+        type: "bubble",
+        size: "kilo",
+        hero: IMG_URL ? { type: "image", url: IMG_URL, size: "full", aspectRatio: "20:13", aspectMode: "cover" } : undefined,
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            { type: "text", text: "🎁 好友專屬好禮送給你！", weight: "bold", size: "lg", color: THEME_COL },
+            { type: "text", text: `【${TITLE}】`, weight: "bold", size: "md", margin: "md", wrap: true },
+            { type: "text", text: DESC, size: "xs", color: "#666666", margin: "sm", wrap: true },
+            { type: "text", text: `專屬 VIP 邀請碼：VIP${VIP_CODE}`, size: "xs", color: "#999999", margin: "md" }
+          ]
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            { type: "button", style: "primary", color: THEME_COL, height: "sm", action: { type: "uri", label: "🎁 立即領取專屬好禮", uri: claimUrl } }
+          ]
+        }
+      };
+
+      await liff.shareTargetPicker([{
+        type: "flex",
+        altText: `🎁 送你一張專屬優惠券：${TITLE}`,
+        contents: shareBubble
+      }]);
+
+      if (liff.isInClient()) {
+        liff.closeWindow();
       }
     }
 
