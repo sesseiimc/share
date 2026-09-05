@@ -1,80 +1,1037 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>專屬好康跳轉中...</title>
-  <style>
-    :root { --theme-color: #6B2D3C; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #F8F9FA;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px 16px;
-    }
-    .card {
-      background: #FFFFFF;
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      max-width: 360px;
-      width: 100%;
-      overflow: hidden;
-      text-align: center;
-      padding: 40px 20px;
-    }
-    .spinner {
-      border: 3px solid rgba(0,0,0,0.1); width: 40px; height: 40px;
-      border-radius: 50%; border-left-color: var(--theme-color);
-      animation: spin 1s linear infinite; margin: 0 auto 16px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .btn-manual {
-      display: inline-block; margin-top: 16px; padding: 10px 20px;
-      background: var(--theme-color); color: #fff; text-decoration: none;
-      border-radius: 8px; font-size: 14px; font-weight: bold;
-    }
-  </style>
-</head>
-<body>
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>我的優惠券庫</title>
+    <style>
+      :root {
+        --theme: #06c755;
+        --bg: #f4f6f8;
+        --text: #17202a;
+        --muted: #687481;
+        --line: #dfe4ea;
+        --danger: #a53b2a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+        font-size: 24px;
+      }
+      header {
+        background: var(--theme);
+        color: white;
+        padding: 24px 20px 26px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.2;
+      }
+      .sub {
+        margin-top: 10px;
+        color: rgba(255, 255, 255, .9);
+        font-size: 21px;
+      }
+      main {
+        width: 100%;
+        max-width: 430px;
+        margin: 0 auto;
+        padding: 14px 14px 30px;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        color: var(--text);
+        padding: 18px 8px;
+        font: inherit;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      button.active {
+        border-color: var(--theme);
+        color: var(--theme);
+      }
+      .notice {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: none;
+        margin-bottom: 10px;
+        padding: 18px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: white;
+        color: var(--muted);
+        font-size: 22px;
+      }
+      .card {
+        margin-bottom: 16px;
+        padding: 20px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+      .card-image {
+        width: calc(100% + 32px);
+        height: 180px;
+        margin: -20px -16px 16px;
+        border-radius: 8px 8px 0 0;
+        object-fit: cover;
+        display: block;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .type {
+        color: var(--theme);
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .status {
+        padding: 7px 11px;
+        border-radius: 999px;
+        white-space: nowrap;
+        font-size: 17px;
+        font-weight: 800;
+      }
+      .status.ok { color: #0b7d45; background: #e8f7ef; }
+      .status.used { color: #5f6670; background: #edf0f2; }
+      .status.expired { color: var(--danger); background: #fff0ec; }
+      .offer {
+        margin-top: 10px;
+        font-size: 28px;
+        font-weight: 850;
+      }
+      .code {
+        margin: 18px 0;
+        padding: 18px 10px;
+        border: 2px dashed var(--theme);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+      .meta,
+      .terms {
+        color: var(--muted);
+        font-size: 24px;
+        line-height: 1.55;
+        white-space: pre-line;
+      }
+      .redeem {
+        width: 100%;
+        margin-top: 18px;
+        padding: 22px 12px;
+        border-color: var(--theme);
+        background: var(--theme);
+        color: white;
+        font-size: 25px;
+      }
+      .secondary-action {
+        width: 100%;
+        margin-top: 12px;
+        border-color: var(--line);
+        background: white;
+        color: var(--text);
+        font-size: 24px;
+      }
+      .redeem:disabled { opacity: .55; }
+      .empty {
+        padding: 48px 12px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 24px;
+      }
+      .loading {
+        display: grid;
+        place-items: center;
+        gap: 14px;
+        padding: 54px 12px;
+        color: var(--muted);
+        font-size: 24px;
+        text-align: center;
+      }
+      .spinner {
+        width: 46px;
+        height: 46px;
+        border: 5px solid rgba(6, 199, 85, .18);
+        border-top-color: var(--theme);
+        border-radius: 50%;
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .invite {
+        padding: 26px 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+      .invite h2 {
+        margin: 0 0 12px;
+        color: var(--theme);
+        font-size: 29px;
+      }
+      .invite p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 24px;
+        line-height: 1.55;
+      }
+      .invite-code {
+        margin: 18px 0;
+        padding: 18px 10px;
+        border: 2px dashed var(--theme);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 30px;
+        font-weight: 900;
+      }
+      .share-card-preview {
+        overflow: hidden;
+        margin-bottom: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+      .share-card-preview img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 20 / 13;
+        object-fit: cover;
+        background: #e8ecef;
+      }
+      .share-card-body {
+        padding: 20px 16px;
+      }
+      .share-card-body h2 {
+        margin: 0 0 12px;
+        color: var(--theme);
+        font-size: 29px;
+        line-height: 1.25;
+      }
+      .share-card-body p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 24px;
+        line-height: 1.55;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(17, 24, 39, .55);
+      }
+      .modal {
+        width: 100%;
+        max-width: 400px;
+        padding: 24px;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, .24);
+      }
+      .modal h2 {
+        margin: 0 0 12px;
+        font-size: 28px;
+      }
+      .modal p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+        font-size: 23px;
+      }
+      .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .modal-confirm {
+        border-color: var(--theme);
+        background: var(--theme);
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="title">我的優惠券庫</h1>
+      <div class="sub">查看可使用、已核銷與已過期優惠券</div>
+    </header>
+    <main>
+      <div id="notice" class="notice"></div>
+      <div class="tabs">
+        <button class="active" data-filter="可使用">可使用</button>
+        <button data-filter="已核銷">已核銷</button>
+        <button data-filter="已過期">已過期</button>
+      </div>
+      <section id="list"></section>
+    </main>
+    <div id="modalBackdrop" class="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <h2 id="modalTitle">確認核銷</h2>
+        <p id="modalText"></p>
+        <div class="modal-actions">
+          <button id="modalCancel">取消</button>
+          <button id="modalConfirm" class="modal-confirm">確認核銷</button>
+        </div>
+      </div>
+    </div>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+      const state = {
+        apiUrl: '',
+        botId: '',
+        liffId: '',
+        userId: '',
+        displayName: '',
+        sharerName: '',
+        botBasicId: '',
+        officialLineUrl: '',
+        friendFlag: false,
+        joinedFromInvite: false,
+        hasCachedWallet: false,
+        coupons: [],
+        filter: '可使用',
+        pendingRedeem: null,
+        claim: null,
+        shareCode: '',
+        shareImageUrl: '',
+        sourceCode: ''
+      };
+      const list = document.getElementById('list');
+      const title = document.getElementById('title');
+      const subtitle = document.querySelector('.sub');
+      const tabs = document.querySelector('.tabs');
+      const notice = document.getElementById('notice');
+      const modalBackdrop = document.getElementById('modalBackdrop');
+      const modalText = document.getElementById('modalText');
+      const modalCancel = document.getElementById('modalCancel');
+      const modalConfirm = document.getElementById('modalConfirm');
+      const tabButtons = Array.from(document.querySelectorAll('button[data-filter]'));
+      const statusClass = { '可使用': 'ok', '已核銷': 'used', '已過期': 'expired' };
 
-  <div class="card">
-    <div class="spinner"></div>
-    <h3 style="color: #2D3748; font-size: 16px; margin-bottom: 8px;">正在為您開啟專屬好禮...</h3>
-    <p style="color: #718096; font-size: 13px;">即將自動前往 LINE 官方帳號</p>
-    <a id="fallbackBtn" class="btn-manual" style="display: none;" href="#">點此直接進入 LINE</a>
-  </div>
+      bootstrap();
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    let botId = urlParams.get("bot") || "";
-    const sourceTag = urlParams.get("src") || "";
+      async function bootstrap() {
+        const params = mergedParams();
+        const view = params.get('view') || '';
+        if (view === 'invite') {
+          setInviteChrome('即將前往官方 LINE 完成領取');
+          showLoading('即將開啟官方 LINE...');
+        } else {
+          setWalletChrome();
+          showLoading('讀取優惠券庫...');
+        }
+        state.apiUrl = params.get('apiUrl') || '';
+        state.botId = params.get('botId') || params.get('bot') || '';
+        state.liffId = params.get('liffId') || '';
+        state.userId = params.get('userId') || params.get('uid') || '';
+        state.displayName = params.get('displayName') || '';
+        state.sharerName = params.get('sharerName') || '';
+        state.botBasicId = params.get('botBasicId') || params.get('basicId') || '';
+        state.officialLineUrl = params.get('officialLineUrl') || params.get('lineUrl') || '';
+        state.claim = params.get('view') === 'claim'
+          ? {
+              src: params.get('src') || 'DEFAULT',
+              stage: params.get('stage') || 'entry_review',
+              order: params.get('order') || 1,
+              type: params.get('type') || ''
+            }
+          : null;
+        state.shareCode = params.get('shareCode') || '';
+        state.shareImageUrl = params.get('imageUrl') || '';
+        state.sourceCode = params.get('src') || 'SHARE';
+        applySavedConfig(params);
 
-    // 自動補上 @ 符號防呆
-    if (botId && !botId.startsWith("@")) {
-      botId = "@" + botId;
-    }
+        if (!state.userId) await resolveLiffUser();
+        await resolveFriendship();
+        if (view === 'shareSend' && state.shareCode) {
+          setInviteChrome('選擇 LINE 好友分享邀請卡');
+          renderShareSender();
+          setTimeout(shareToLineFriends, 500);
+          return;
+        }
+        if (view === 'invite' && state.shareCode) {
+          if (state.friendFlag && (!state.apiUrl || !state.botId)) {
+            renderExistingFriendNotice();
+            return;
+          }
+          if (!state.apiUrl || !state.botId) {
+            renderInviteSetupNotice();
+            return;
+          }
+          if (!state.userId) {
+            renderOpenFromLineNotice();
+            return;
+          }
+          loadInvite();
+          return;
+        }
+        if (!state.apiUrl || !state.botId) {
+          renderSetupNotice();
+          return;
+        }
+        if (!state.userId) {
+          renderOpenFromLineNotice();
+          return;
+        }
+        if (state.claim) {
+          claimCoupon();
+          return;
+        }
+        loadWallet();
+      }
 
-    if (botId) {
-      const targetUrl = `https://line.me/R/oaMessage/${encodeURIComponent(botId)}/?${encodeURIComponent(sourceTag)}`;
-      
-      // 立即自動喚醒 LINE App
-      window.location.href = targetUrl;
+      function applySavedConfig(params) {
+        const saved = readSavedConfig();
+        if (!state.apiUrl && saved.apiUrl) state.apiUrl = saved.apiUrl;
+        if (!state.botId && saved.botId) state.botId = saved.botId;
+        if (!state.liffId && saved.liffId) state.liffId = saved.liffId;
+        if (state.apiUrl || state.botId || state.liffId) {
+          saveConfig({
+            apiUrl: state.apiUrl,
+            botId: state.botId,
+            liffId: state.liffId
+          });
+        }
+      }
 
-      // 防呆：若手機瀏覽器攔截，顯示手動點擊按鈕
-      setTimeout(() => {
-        const btn = document.getElementById("fallbackBtn");
-        btn.href = targetUrl;
-        btn.style.display = "inline-block";
-      }, 1500);
-    } else {
-      document.querySelector("h3").innerText = "⚠️ 連結缺少官方帳號參數";
-      document.querySelector("p").innerText = "請確認推廣網址是否包含 ?bot=@帳號ID";
-      document.querySelector(".spinner").style.display = "none";
-    }
-  </script>
-</body>
+      function readSavedConfig() {
+        try {
+          return JSON.parse(localStorage.getItem('couponWalletConfig') || '{}');
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function saveConfig(config) {
+        try {
+          localStorage.setItem('couponWalletConfig', JSON.stringify(config || {}));
+        } catch (error) {
+          return;
+        }
+      }
+
+      async function resolveLiffUser() {
+        if (!window.liff || !state.liffId) return;
+        try {
+          await liff.init({ liffId: state.liffId });
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+          const profile = await liff.getProfile();
+          state.userId = profile.userId || '';
+          state.displayName = profile.displayName || '';
+        } catch (error) {
+          showNotice('無法讀取 LINE 身分，請從 LINE 內重新開啟');
+        }
+      }
+
+      async function resolveFriendship() {
+        state.friendFlag = false;
+        if (!window.liff || !state.liffId || !liff.isLoggedIn()) return;
+        try {
+          const friendship = await liff.getFriendship();
+          state.friendFlag = !!friendship.friendFlag;
+        } catch (error) {
+          state.friendFlag = false;
+        }
+      }
+
+      function loadWallet() {
+        setWalletChrome();
+        renderCachedWallet();
+        if (!state.hasCachedWallet) showLoading('更新中...');
+        callApi('wallet', {}, result => {
+          applyPayload(result);
+          render();
+        });
+      }
+
+      function claimCoupon() {
+        showLoading('優惠券加入中...');
+        showNotice('優惠券加入中...');
+        callApi('claim', state.claim, result => {
+          applyPayload(result);
+          showNotice(result.message || '優惠券已加入你的券庫');
+          render('可使用');
+        }, () => {
+          showNotice('連線較慢，請重新開啟優惠券庫確認');
+          loadWallet();
+        });
+      }
+
+      function loadInvite() {
+        setInviteChrome('即將前往官方 LINE 完成領取');
+        showLoading('即將開啟官方 LINE...');
+        prepareShareThenOpenOfficialLine();
+      }
+
+      function setWalletChrome() {
+        title.textContent = '我的優惠券庫';
+        if (subtitle) subtitle.textContent = '查看可使用、已核銷與已過期優惠券';
+        if (tabs) tabs.style.display = 'grid';
+      }
+
+      function setInviteChrome(description) {
+        title.textContent = '好友邀請禮';
+        if (subtitle) subtitle.textContent = description || '加入官方帳號後領取好友邀請券';
+        if (tabs) tabs.style.display = 'none';
+      }
+
+      function renderInvite(result) {
+        setInviteChrome('加入官方帳號後領取好友邀請券');
+        tabButtons.forEach(button => button.classList.remove('active'));
+        if (!state.friendFlag) {
+          list.innerHTML = `
+            <section class="invite">
+              <h2>先加入官方帳號</h2>
+              <p>你收到 ${escapeHtml(result.sharerName || state.sharerName || 'LINE 好友')} 的好友分享優惠。加入官方帳號後，才可以領取好友邀請券。</p>
+              <div class="invite-code">${escapeHtml(result.shareCode || state.shareCode)}</div>
+              <button class="redeem" id="requestFriendship">加入官方帳號並領券</button>
+            </section>
+          `;
+          document.getElementById('requestFriendship').addEventListener('click', prepareShareThenOpenOfficialLine);
+          return;
+        }
+        list.innerHTML = `
+          <section class="invite">
+            <h2>好友邀請禮</h2>
+            <p>你收到 ${escapeHtml(result.sharerName || state.sharerName || 'LINE 好友')} 的好友分享優惠。點擊下方按鈕後，優惠券會加入你的券庫。</p>
+            <div class="invite-code">${escapeHtml(result.shareCode || state.shareCode)}</div>
+            <button class="redeem" id="claimShareCoupon">加入官方帳號領取</button>
+          </section>
+        `;
+        document.getElementById('claimShareCoupon').addEventListener('click', prepareShareThenOpenOfficialLine);
+      }
+
+      function renderExistingFriendNotice() {
+        setInviteChrome('好友邀請禮');
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="invite">
+            <h2>您已是我們的好友囉</h2>
+            <p>感謝您一直關注我們。</p>
+            <p>這份好友邀請禮是提供給首次加入官方帳號的新朋友專屬，因此目前無法重複領取。</p>
+            <p>您可以到「我的優惠券庫」查看目前可使用的優惠券。</p>
+            <button class="redeem" id="openWallet">查看我的優惠券庫</button>
+          </section>
+        `;
+        document.getElementById('openWallet').addEventListener('click', loadWallet);
+      }
+
+      function renderSetupNotice() {
+        setWalletChrome();
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <div class="empty">目前沒有可使用的優惠券</div>
+        `;
+      }
+
+      function renderInviteSetupNotice() {
+        setInviteChrome('好友邀請禮');
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="invite">
+            <h2>邀請禮尚未啟用</h2>
+            <p>這份好友邀請禮目前無法確認領取資料。請回到 LINE 聊天室，從最新的好友分享卡重新開啟。</p>
+          </section>
+        `;
+      }
+
+      function renderOpenFromLineNotice() {
+        setInviteChrome('好友邀請禮');
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="invite">
+            <h2>請從 LINE 官方帳號開啟</h2>
+            <p>為了確認優惠券歸屬，請從 LINE 官方帳號內的按鈕或好友分享卡重新開啟。</p>
+          </section>
+        `;
+      }
+
+      async function requestOfficialAccountFriendship() {
+        if (!window.liff || !liff.isInClient()) {
+          showNotice('請在 LINE 內開啟，才能加入官方帳號');
+          return;
+        }
+        try {
+          if (typeof liff.requestFriendship === 'function') {
+            await liff.requestFriendship();
+          } else {
+            showNotice('請先加入官方帳號，再回到此頁領券');
+            return;
+          }
+          await resolveFriendship();
+          if (state.friendFlag) {
+            state.joinedFromInvite = true;
+            claimShareCoupon(true);
+          } else {
+            showNotice('加入尚未完成，請完成加入後再領券');
+          }
+        } catch (error) {
+          showNotice('加入官方帳號尚未完成，請再試一次');
+        }
+      }
+
+      function prepareShareThenOpenOfficialLine() {
+        if (!state.shareCode) return;
+        setInviteChrome('即將前往官方 LINE 完成領取');
+        showLoading('即將開啟官方 LINE...');
+        let opened = false;
+        if (officialChatUrl()) {
+          opened = true;
+          openOfficialLine();
+        }
+        callApi('sharePrepare', { shareCode: state.shareCode }, result => {
+          applyPayload(result);
+          if (result.status === 'alreadyFriend') {
+            renderExistingFriendNotice();
+            return;
+          }
+          if (result.status === 'alreadyClaimed') {
+            render('可使用');
+            return;
+          }
+          renderOpeningOfficialLine();
+          if (!opened) openOfficialLine();
+        }, () => {
+          if (!opened) renderInviteSetupNotice();
+        });
+      }
+
+      function renderOpeningOfficialLine() {
+        setInviteChrome('即將前往官方 LINE 完成領取');
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="invite">
+            <h2>即將開啟官方 LINE</h2>
+            <p>請在官方帳號完成加入。加入成功後，好友邀請券會由官方 LINE 發送給您。</p>
+            ${officialChatUrl() ? `<button class="redeem" id="openOfficialLineNow">前往官方 LINE</button>` : ''}
+          </section>
+        `;
+        const officialLineButton = document.getElementById('openOfficialLineNow');
+        if (officialLineButton) officialLineButton.addEventListener('click', openOfficialLine);
+      }
+
+      function renderShareSender() {
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="share-card-preview">
+            ${state.shareImageUrl ? `<img src="${escapeAttr(state.shareImageUrl)}" alt="">` : ''}
+            <div class="share-card-body">
+              <h2>🎁 專屬好友分享卡入帳中</h2>
+              <p><strong>【好友分享券】</strong><br>${escapeHtml(state.sharerName || state.displayName || '您的')} 專屬 VIP 邀請碼：<strong>${escapeHtml(state.shareCode)}</strong></p>
+              <p>💡 點擊下方按鈕，可直接發送【專屬彩色圖文禮卡】給 LINE 好友！</p>
+              <p>✨ 好友加入官方帳號後，您與好友將會同時各獲得一張專屬優惠券！</p>
+              <button class="redeem" id="shareToFriends">📱 一鍵轉發給 LINE 好友</button>
+            </div>
+          </section>
+        `;
+        document.getElementById('shareToFriends').addEventListener('click', shareToLineFriends);
+      }
+
+      async function shareToLineFriends() {
+        if (!window.liff || !liff.isInClient()) {
+          showNotice('請在 LINE 內開啟，才能直接選好友轉發');
+          return;
+        }
+        const canShare = await liff.isApiAvailable('shareTargetPicker');
+        if (!canShare) {
+          showNotice('目前 LINE 版本不支援好友選擇器，請更新 LINE 後再試');
+          return;
+        }
+        try {
+          const result = await liff.shareTargetPicker([buildShareFlexMessage()]);
+          if (result) showNotice('已送出好友分享卡');
+        } catch (error) {
+          showNotice('尚未完成分享，請再點一次按鈕');
+        }
+      }
+
+      function buildShareFlexMessage() {
+        const inviteUrl = buildOaMessageUrl() || buildInviteUrl();
+        const bubble = {
+          type: 'bubble',
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+              { type: 'text', text: '🎁 專屬好友分享卡入帳中', weight: 'bold', size: 'xl', color: getThemeColor(), wrap: true },
+              { type: 'text', text: '【好友分享券】', weight: 'bold', size: 'lg', color: '#333333', wrap: true },
+              { type: 'text', text: (state.sharerName || state.displayName || '好友') + ' 的專屬 VIP 邀請碼：' + state.shareCode, weight: 'bold', size: 'lg', color: '#333333', wrap: true },
+              { type: 'text', text: '💡 點擊下方按鈕會開啟官方帳號，送出預帶訊息後即可領取好友邀請優惠券。', size: 'md', color: '#666666', wrap: true },
+              { type: 'text', text: '✨ 加入官方帳號後，您與好友將會同時各獲得一張專屬優惠券！', size: 'md', color: '#666666', wrap: true }
+            ]
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'button',
+                style: 'primary',
+                color: getThemeColor(),
+                action: {
+                  type: 'uri',
+                  label: '加入官方帳號領取',
+                  uri: inviteUrl
+                }
+              }
+            ]
+          }
+        };
+        if (state.shareImageUrl) {
+          bubble.hero = {
+            type: 'image',
+            url: state.shareImageUrl,
+            size: 'full',
+            aspectRatio: '20:13',
+            aspectMode: 'cover'
+          };
+        }
+        return {
+          type: 'flex',
+          altText: '好友分享券',
+          contents: bubble
+        };
+      }
+
+      function buildOaMessageUrl() {
+        const basicId = normalizedBotBasicId();
+        if (!basicId) return '';
+        const message = '🎁領取好友分享禮【VIP推薦碼' + state.shareCode + '】';
+        return 'line://oaMessage/' + basicId + '/?' + encodeURIComponent(message);
+      }
+
+      function buildInviteUrl() {
+        const params = new URLSearchParams({
+          view: 'invite',
+          liffId: state.liffId,
+          botId: state.botId,
+          botBasicId: state.botBasicId,
+          officialLineUrl: state.officialLineUrl,
+          apiUrl: state.apiUrl,
+          shareCode: state.shareCode,
+          src: state.sourceCode,
+          sharerName: state.sharerName || state.displayName
+        });
+        return location.origin + location.pathname + '?' + params.toString();
+      }
+
+      function getThemeColor() {
+        return getComputedStyle(document.documentElement).getPropertyValue('--theme').trim() || '#06c755';
+      }
+
+      function claimShareCoupon(autoOpenOfficial) {
+        showLoading('好友邀請券加入中...');
+        showNotice('好友邀請券加入中...');
+        callApi('shareClaim', { shareCode: state.shareCode }, result => {
+          applyPayload(result);
+          renderShareClaimResult(result, autoOpenOfficial);
+        });
+      }
+
+      function renderShareClaimResult(result, autoOpenOfficial) {
+        tabButtons.forEach(button => button.classList.remove('active'));
+        list.innerHTML = `
+          <section class="invite">
+            <h2>好友邀請券已入帳</h2>
+            <p>${escapeHtml(result.chatPushOk === false ? '優惠券已加入券庫。若聊天室尚未收到訊息，請確認已加入官方帳號。' : '優惠券已透過官方 LINE 發送給您。')}</p>
+            <p>您也可以回到優惠券庫查看目前可使用的優惠券。</p>
+            ${officialChatUrl() ? `<button class="redeem" id="openOfficialLineAfterClaim">前往官方 LINE 查看</button>` : ''}
+            <button class="secondary-action" id="openWalletAfterClaim">查看我的優惠券庫</button>
+          </section>
+        `;
+        const officialLineButton = document.getElementById('openOfficialLineAfterClaim');
+        if (officialLineButton) officialLineButton.addEventListener('click', openOfficialLine);
+        document.getElementById('openWalletAfterClaim').addEventListener('click', () => render('可使用'));
+        if (autoOpenOfficial && officialChatUrl()) {
+          setTimeout(openOfficialLine, 900);
+        }
+      }
+
+      function redeemCoupon(code, button) {
+        state.pendingRedeem = { code, button };
+        modalText.textContent = '請確認由店員操作。確定要核銷優惠券 ' + code + ' 嗎？';
+        modalBackdrop.style.display = 'flex';
+      }
+
+      function confirmRedeem() {
+        if (!state.pendingRedeem) return;
+        const code = state.pendingRedeem.code;
+        const button = state.pendingRedeem.button;
+        state.pendingRedeem = null;
+        modalBackdrop.style.display = 'none';
+        button.disabled = true;
+        button.textContent = '核銷中...';
+        callApi('redeem', { code }, result => {
+          applyPayload(result);
+          showNotice(result.message || '已更新');
+          render(state.filter);
+        }, () => {
+          button.disabled = false;
+          button.textContent = '店員核銷此券';
+        });
+      }
+
+      function callApi(api, extraParams, onSuccess, onFailure) {
+        const callback = '__couponWalletCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const script = document.createElement('script');
+        let completed = false;
+        const timeout = window.setTimeout(() => {
+          if (completed) return;
+          completed = true;
+          delete window[callback];
+          script.remove();
+          showNotice('連線較慢，請稍後再試');
+          if (onFailure) onFailure();
+        }, 8000);
+        const params = new URLSearchParams({
+          api,
+          callback,
+          botId: state.botId,
+          userId: state.userId,
+          displayName: state.displayName,
+          friendFlag: String(state.friendFlag)
+        });
+        if (state.joinedFromInvite) params.set('joinedFromInvite', 'true');
+        Object.entries(extraParams || {}).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') params.set(key, value);
+        });
+        window[callback] = result => {
+          if (completed) return;
+          completed = true;
+          window.clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          if (!result || result.ok === false) {
+            showNotice(result && result.message ? result.message : '操作失敗，請稍後再試');
+            if (onFailure) onFailure(result);
+            return;
+          }
+          onSuccess(result);
+        };
+        script.onerror = () => {
+          if (completed) return;
+          completed = true;
+          window.clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          showNotice('連線失敗，請稍後再試');
+          if (onFailure) onFailure();
+        };
+        script.src = state.apiUrl + (state.apiUrl.includes('?') ? '&' : '?') + params.toString();
+        document.body.appendChild(script);
+      }
+
+      function applyPayload(result) {
+        if (result.themeColor) document.documentElement.style.setProperty('--theme', result.themeColor);
+        if (result.brandName) title.textContent = result.brandName + '｜我的優惠券庫';
+        if (result.botBasicId) state.botBasicId = result.botBasicId;
+        if (result.officialLineUrl) state.officialLineUrl = result.officialLineUrl;
+        state.coupons = result.coupons || [];
+        saveWalletCache(result);
+      }
+
+      function renderCachedWallet() {
+        const cached = readWalletCache();
+        if (!cached || !Array.isArray(cached.coupons)) return;
+        state.hasCachedWallet = true;
+        applyPayload(cached);
+        render(state.filter);
+      }
+
+      function walletCacheKey() {
+        return 'couponWalletData:' + String(state.botId || 'default') + ':' + String(state.userId || 'anonymous');
+      }
+
+      function readWalletCache() {
+        try {
+          return JSON.parse(localStorage.getItem(walletCacheKey()) || 'null');
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function saveWalletCache(result) {
+        if (!state.botId || !state.userId || !result || !Array.isArray(result.coupons)) return;
+        try {
+          localStorage.setItem(walletCacheKey(), JSON.stringify({
+            brandName: result.brandName || title.textContent.replace(/｜我的優惠券庫$/, ''),
+            themeColor: result.themeColor || getThemeColor(),
+            botBasicId: result.botBasicId || state.botBasicId || '',
+            coupons: result.coupons,
+            cachedAt: Date.now()
+          }));
+        } catch (error) {
+          return;
+        }
+      }
+
+      function render(filter) {
+        if (filter) state.filter = filter;
+        tabButtons.forEach(button => button.classList.toggle('active', button.dataset.filter === state.filter));
+        const items = state.coupons.filter(coupon => coupon.status === state.filter);
+        if (!items.length) {
+          list.innerHTML = '<div class="empty">目前沒有' + escapeHtml(state.filter) + '的優惠券</div>';
+          return;
+        }
+        list.innerHTML = items.map(coupon => `
+          <article class="card">
+            ${coupon.imageUrl ? `<img class="card-image" src="${escapeAttr(resolveImageSrc(coupon.imageUrl))}" data-original-src="${escapeAttr(coupon.imageUrl)}" alt="" onerror="handleImageError(this)">` : ''}
+            <div class="top">
+              <div class="type">${escapeHtml(coupon.type)}</div>
+              <div class="status ${statusClass[coupon.status] || 'used'}">${escapeHtml(coupon.status)}</div>
+            </div>
+            <div class="offer">${escapeHtml(coupon.offer)}</div>
+            <div class="code">${escapeHtml(coupon.code)}</div>
+            ${coupon.sharerName ? `<div class="meta">分享者：${escapeHtml(coupon.sharerName)}</div>` : ''}
+            ${coupon.invitedName ? `<div class="meta">領取人：${escapeHtml(coupon.invitedName)}</div>` : ''}
+            <div class="meta">使用期限：${escapeHtml(coupon.expiresAt)}</div>
+            ${coupon.redeemedAt ? `<div class="meta">核銷日期：${escapeHtml(coupon.redeemedAt)}</div>` : ''}
+            <div class="terms">${escapeHtml(coupon.terms)}</div>
+            ${coupon.status === '可使用' ? `<button class="redeem" data-code="${escapeAttr(coupon.code)}">店員核銷此券</button>` : ''}
+          </article>
+        `).join('');
+        Array.from(document.querySelectorAll('button.redeem')).forEach(button => {
+          button.addEventListener('click', () => redeemCoupon(button.dataset.code, button));
+        });
+      }
+
+      function mergedParams() {
+        const params = new URLSearchParams(window.location.search);
+        const liffState = params.get('liff.state');
+        if (liffState) {
+          const stateParams = new URLSearchParams(liffState.replace(/^\?/, ''));
+          stateParams.forEach((value, key) => params.set(key, value));
+        }
+        return params;
+      }
+
+      function resolveImageSrc(url) {
+        const text = String(url || '').trim();
+        const driveId = extractDriveFileId(text);
+        if (driveId) return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(driveId) + '&sz=w1000';
+        return text;
+      }
+
+      function handleImageError(image) {
+        const original = image.dataset.originalSrc || image.src || '';
+        const fallback = resolveImageSrc(original);
+        if (fallback && image.src !== fallback) {
+          image.src = fallback;
+          return;
+        }
+        image.remove();
+      }
+
+      function extractDriveFileId(url) {
+        const text = String(url || '').trim();
+        let match = text.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+        if (match) return match[1];
+        match = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (/drive\.google\.com/i.test(text) && match) return match[1];
+        return '';
+      }
+
+      function showNotice(message) {
+        notice.textContent = message;
+        notice.style.display = 'block';
+        setTimeout(() => { notice.style.display = 'none'; }, 3500);
+      }
+
+      function showLoading(message) {
+        list.innerHTML = '<div class="loading"><div class="spinner"></div><div>' + escapeHtml(message || '讀取中...') + '</div></div>';
+      }
+
+      function officialChatUrl() {
+        if (state.officialLineUrl) return state.officialLineUrl;
+        const basicId = normalizedBotBasicId();
+        if (!basicId) return '';
+        return 'https://line.me/R/ti/p/' + basicId;
+      }
+
+      function officialLineSchemeUrl() {
+        const basicId = normalizedBotBasicId();
+        if (!basicId) return '';
+        return 'line://ti/p/' + basicId;
+      }
+
+      function normalizedBotBasicId() {
+        const value = String(state.botBasicId || '').trim();
+        if (!value) return '';
+        return value.charAt(0) === '@' ? value : '@' + value;
+      }
+
+      function openOfficialLine() {
+        const url = officialChatUrl();
+        if (!url) return;
+        if (state.officialLineUrl) {
+          window.location.href = url;
+          return;
+        }
+        const appUrl = officialLineSchemeUrl();
+        if (appUrl) {
+          window.location.href = appUrl;
+          setTimeout(() => { window.location.href = url; }, 700);
+          return;
+        }
+        window.location.href = url;
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[char]));
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/"/g, '&quot;');
+      }
+
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => render(button.dataset.filter));
+      });
+      modalCancel.addEventListener('click', () => {
+        modalBackdrop.style.display = 'none';
+        state.pendingRedeem = null;
+      });
+      modalConfirm.addEventListener('click', confirmRedeem);
+      modalBackdrop.addEventListener('click', event => {
+        if (event.target === modalBackdrop) {
+          modalBackdrop.style.display = 'none';
+          state.pendingRedeem = null;
+        }
+      });
+    </script>
+  </body>
 </html>
