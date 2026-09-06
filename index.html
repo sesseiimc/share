@@ -486,9 +486,23 @@
           showNotice(result.message || '優惠券已加入你的券庫');
           render('可使用');
         }, () => {
-          showNotice('連線較慢，請重新開啟優惠券庫確認');
-          loadWallet();
+          showNotice('領券連線失敗，請按下方按鈕重試');
+          renderClaimRetryNotice();
         });
+      }
+
+      function renderClaimRetryNotice() {
+        setWalletChrome();
+        list.innerHTML = `
+          <section class="invite">
+            <h2>優惠券尚未成功加入</h2>
+            <p>目前沒有成功連到領券系統，優惠券還沒有寫入券庫。請確認網路後重新領取。</p>
+            <button class="redeem" id="retryClaim">重新領取優惠券</button>
+            <button class="secondary-action" id="openWallet">查看我的優惠券庫</button>
+          </section>
+        `;
+        document.getElementById('retryClaim').addEventListener('click', claimCoupon);
+        document.getElementById('openWallet').addEventListener('click', loadWallet);
       }
 
       function loadInvite() {
@@ -850,7 +864,7 @@
           delete window[callback];
           script.remove();
           showNotice('連線失敗，請稍後再試');
-          if (onFailure) onFailure();
+          if (onFailure) onFailure({ networkError: true, apiUrl: state.apiUrl });
         };
         script.src = state.apiUrl + (state.apiUrl.includes('?') ? '&' : '?') + params.toString();
         document.body.appendChild(script);
