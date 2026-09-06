@@ -352,7 +352,8 @@
         state.sharerName = params.get('sharerName') || '';
         state.botBasicId = params.get('botBasicId') || params.get('basicId') || '';
         state.officialLineUrl = params.get('officialLineUrl') || params.get('lineUrl') || '';
-        state.claim = params.get('view') === 'claim'
+        const shouldClaim = isClaimRequest(params);
+        state.claim = shouldClaim
           ? {
               src: params.get('src') || 'DEFAULT',
               stage: params.get('stage') || 'entry_review',
@@ -402,6 +403,12 @@
           return;
         }
         loadWallet();
+      }
+
+      function isClaimRequest(params) {
+        const view = params.get('view') || '';
+        if (view === 'claim') return true;
+        return !!(params.get('stage') && (params.get('src') || params.get('source')) && (params.get('order') || params.get('type')));
       }
 
       function applySavedConfig(params) {
@@ -1041,3 +1048,4 @@
     </script>
   </body>
 </html>
+
