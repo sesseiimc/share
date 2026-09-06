@@ -854,8 +854,14 @@
         if (result.brandName) title.textContent = result.brandName + '｜我的優惠券庫';
         if (result.botBasicId) state.botBasicId = result.botBasicId;
         if (result.officialLineUrl) state.officialLineUrl = result.officialLineUrl;
-        state.coupons = result.coupons || [];
+        state.coupons = mergeClaimedCoupon(result.coupons || [], result.claimedCoupon);
         saveWalletCache(result);
+      }
+
+      function mergeClaimedCoupon(coupons, claimedCoupon) {
+        if (!claimedCoupon || !claimedCoupon.code) return coupons;
+        const exists = coupons.some(coupon => String(coupon.code || '') === String(claimedCoupon.code || ''));
+        return exists ? coupons : [claimedCoupon].concat(coupons);
       }
 
       function renderCachedWallet() {
@@ -879,13 +885,13 @@
       }
 
       function saveWalletCache(result) {
-        if (!state.botId || !state.userId || !result || !Array.isArray(result.coupons)) return;
+        if (!state.botId || !state.userId || !result || !Array.isArray(state.coupons)) return;
         try {
           localStorage.setItem(walletCacheKey(), JSON.stringify({
             brandName: result.brandName || title.textContent.replace(/｜我的優惠券庫$/, ''),
             themeColor: result.themeColor || getThemeColor(),
             botBasicId: result.botBasicId || state.botBasicId || '',
-            coupons: result.coupons,
+            coupons: state.coupons,
             cachedAt: Date.now()
           }));
         } catch (error) {
